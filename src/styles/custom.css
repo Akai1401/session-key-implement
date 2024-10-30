@@ -1,0 +1,7 @@
+.custom-modal .ant-modal-content {
+  @apply !p-0 !rounded-2xl;
+}
+
+.ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
