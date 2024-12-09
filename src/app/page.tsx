@@ -12,7 +12,7 @@ import useMounted from '@/hook/useMounted';
 import { StarknetConfig } from '@starknet-react/core';
 import { messageError } from '@/utils/message';
 import { formatWallet } from '@/utils';
-import { DRAGON_SYSTEMS, MAP_SYSTEMS, SCOUT_SYSTEMS } from '@/Layouts';
+import { DRAGON_SYSTEMS, MAP_SYSTEMS, ISLAND_SYSTEMS, SCOUT_SYSTEMS } from '@/Layouts';
 import { Divider } from 'antd';
 
 const Home = () => {
@@ -35,6 +35,7 @@ const Home = () => {
     if (!account) {
       return;
     }
+    console.log(account);
     setSubmitted(true);
     setTxnHash(undefined);
     await account
@@ -42,17 +43,17 @@ const Home = () => {
         // {
         //   contractAddress: MAP_SYSTEMS,
         //   entrypoint: 'join_map',
-        //   calldata: ['1384066088', '0', '0', '0', '0'],
+        //   calldata: ['2643854167', '0', '0', '0', '0'],
         // },
         // {
         //   contractAddress: DRAGON_SYSTEMS,
         //   entrypoint: 'claim_default_dragon',
-        //   calldata: ['1384066088'],
+        //   calldata: ['2643854167'],
         // },
         {
           contractAddress: SCOUT_SYSTEMS,
           entrypoint: 'scout',
-          calldata: ['1384066088', '2', '1'],
+          calldata: ['2643854167', '1', '3'],
         },
       ])
       .then(({ transaction_hash }) => setTxnHash(transaction_hash))
