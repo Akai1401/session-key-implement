@@ -1,101 +1,84 @@
 'use client';
 
-import CustomButton from '@/components/custom/CustomButton';
+import React from 'react';
+import { Chain, mainnet, sepolia } from '@starknet-react/chains';
+import ControllerConnector from '@cartridge/connector';
+import { constants, RpcProvider } from 'starknet';
 import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useExplorer,
+  Connector,
+  jsonRpcProvider,
+  StarknetConfig,
+  starkscan,
 } from '@starknet-react/core';
-import React, { useCallback, useEffect, useState } from 'react';
-import useMounted from '@/hook/useMounted';
-import { StarknetConfig } from '@starknet-react/core';
-import { messageError } from '@/utils/message';
-import { formatWallet } from '@/utils';
-import { DRAGON_SYSTEMS, MAP_SYSTEMS, SCOUT_SYSTEMS } from '@/Layouts';
 import { Divider } from 'antd';
+import { POLICIES } from '@/constant';
+import Controller from '@/components/Controller';
+import ArgentX from '@/components/ArgentX';
+import { ArgentMobileBaseConnector } from 'starknetkit/argentMobile';
+import { WebWalletConnector } from 'starknetkit/webwallet';
+import { InjectedConnector } from 'starknetkit/injected';
 
 const Home = () => {
   // const count = useStore((state) => state.count);
   // const setCount = useStore((state) => state.setCount);
-  const { connect, connectors } = useConnect();
-  const { disconnect } = useDisconnect();
-  const { address } = useAccount();
-  const { isMounted } = useMounted();
-  const { account } = useAccount();
-  const [submitted, setSubmitted] = useState<boolean>(false);
-  const explorer = useExplorer();
-  const [txnHash, setTxnHash] = useState<string>();
 
-  useEffect(() => {
-    if (!isMounted) return;
-  }, [isMounted]);
-
-  const execute = useCallback(async () => {
-    if (!account) {
-      return;
-    }
-    setSubmitted(true);
-    setTxnHash(undefined);
-    await account
-      .execute([
-        // {
-        //   contractAddress: MAP_SYSTEMS,
-        //   entrypoint: 'join_map',
-        //   calldata: ['1384066088', '0', '0', '0', '0'],
-        // },
-        // {
-        //   contractAddress: DRAGON_SYSTEMS,
-        //   entrypoint: 'claim_default_dragon',
-        //   calldata: ['1384066088'],
-        // },
-        {
-          contractAddress: SCOUT_SYSTEMS,
-          entrypoint: 'scout',
-          calldata: ['1384066088', '2', '1'],
-        },
-      ])
-      .then(({ transaction_hash }) => setTxnHash(transaction_hash))
-      .catch((e) => console.error(e))
-      .finally(() => setSubmitted(false));
-  }, [account]);
+  const CARTRIDGE_RPC_URL = 'https://api.cartridge.gg/x/starknet/mainnet';
+  const STAKNET_RPC_URL =
+    'https://starknet-sepolia.public.blastapi.io/rpc/v0_7';
 
   return (
     <div className='flex flex-col items-center gap-[1rem] mt-[5rem]'>
-      <div className='flex items-center flex-col'>
-        {address && <p>{address}</p>}
-        <div className='flex items-center gap-[0.5rem] my-[0.5rem]'>
-          <CustomButton
-            className='text-[rgb(243,205,98)] hover:!bg-[#1a1c1b] bg-[#1a1c1b]'
-            type='primary'
-            onClick={() => {
-              console.log('connectors', connectors);
-              address ? disconnect() : connect({ connector: connectors[0] });
-            }}
-          >
-            {address ? 'Disconnect' : 'Cartridge Controller'}
-          </CustomButton>
-          {address && (
-            <CustomButton loading={submitted} onClick={execute}>
-              Execute
-            </CustomButton>
-          )}
-        </div>
-        {txnHash && (
-          <p>
-            <b>Tx hash:</b>{' '}
-            <a
-              href={explorer.transaction(txnHash)}
-              target='_blank'
-              rel='noreferrer'
-            >
-              {txnHash}
-            </a>
-          </p>
-        )}
-      </div>
+      <StarknetConfig
+        autoConnect
+        chains={[mainnet]}
+        connectors={[
+          new ControllerConnector({
+            policies: POLICIES,
+            rpc: CARTRIDGE_RPC_URL,
+            // paymaster: {
+            //   caller: shortString.encodeShortString('ANY_CALLER'),
+            // },
+            theme: 'dope-wars',
+            colorMode: 'dark',
+          }) as any,
+        ]}
+        explorer={starkscan}
+        provider={(chain: Chain) => {
+          return new RpcProvider({
+            nodeUrl: CARTRIDGE_RPC_URL,
+          });
+        }}
+      >
+        <Controller />
+      </StarknetConfig>
+
       <Divider />
-      <CustomButton type='primary'>ArgentX Session Key</CustomButton>
+
+      <StarknetConfig
+        chains={[sepolia]}
+        provider={jsonRpcProvider({
+          rpc: () => ({
+            nodeUrl: STAKNET_RPC_URL,
+          }),
+        })}
+        connectors={
+          [
+            new InjectedConnector({ options: { id: 'argentX' } }),
+            new InjectedConnector({ options: { id: 'braavos' } }),
+            new InjectedConnector({ options: { id: 'keplr' } }),
+            new InjectedConnector({ options: { id: 'okxwallet' } }),
+            new ArgentMobileBaseConnector({
+              dappName: 'Starknetkit example dapp',
+              url: window.location.hostname,
+              icons: [],
+              chainId: constants.NetworkName.SN_SEPOLIA,
+            }),
+            new WebWalletConnector({ url: 'https://web.argent.xyz' }),
+          ] as Connector[]
+        }
+      >
+        <ArgentX />
+      </StarknetConfig>
     </div>
   );
 };
